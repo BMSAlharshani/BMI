@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>BMI Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+          body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            background-color: #5c67f2;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #4a54e1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #e1e1e1;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: center;
+            background-color: #ffffff;
+        }
+
+        th {
+            background-color: #f7f7fa;
+        }
+
+        td {
+            border-top: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 id="greeting"></h1>
+        <div id="name-prompt">
+            <input type="text" id="full-name" placeholder="Enter your full name">
+            <button id="save-name">Save Name</button>
+        </div>
+        <div id="bmi-section" style="display:none;">
+            <input type="number" id="weight" placeholder="Enter weight in kg">
+            <input type="number" id="height" placeholder="Enter height in meters">
+            <button id="calculate-bmi">Calculate BMI</button>
+            <p id="bmi-result"></p>
+            <button id="show-data">Show All Stored Data</button>
+            <button id="logout" style="background-color: red; color: white;">Logout</button>
+        </div>
+        <table id="data-table" style="display:none;">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Weight (kg)</th>
+                    <th>Height (m)</th>
+                    <th>BMI</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <script>
+        $(document).ready(function () {
+            function getName() {
+                return localStorage.getItem('fullName');
+            }
+
+            function saveName(name) {
+                localStorage.setItem('fullName', name);
+                displayGreeting();
+            }
+
+            function displayGreeting() {
+                const name = getName();
+                if (name) {
+                    $('#greeting').text(`Hello, ${name}`);
+                    $('#name-prompt').hide();
+                    $('#bmi-section').show();
+                } else {
+                    $('#greeting').text('Hello');
+                    $('#name-prompt').show();
+                    $('#bmi-section').hide();
+                }
+            }
+
+            function getCurrentDate() {
+                return new Date().toLocaleDateString();
+            }
+
+            function calculateBMI(weight, height) {
+                return (weight / (height * height)).toFixed(2);
+            }
+
+            function getStatus(bmi) {
+                if (bmi < 18.5) return 'Underweight';
+                if (bmi >= 18.5 && bmi < 24.9) return 'Normal weight';
+                if (bmi >= 25 && bmi < 29.9) return 'Overweight';
+                return 'Obesity';
+            }
+
+            function saveBMIData(name, weight, height, bmi, status) {
+                const date = getCurrentDate();
+                const bmiData = JSON.parse(localStorage.getItem('bmiData') || '[]');
+                bmiData.push({ name, date, weight, height, bmi, status });
+                localStorage.setItem('bmiData', JSON.stringify(bmiData));
+            }
+
+            function displayData() {
+                const bmiData = JSON.parse(localStorage.getItem('bmiData') || '[]');
+                const tableBody = $('#data-table tbody');
+                tableBody.empty();
+                bmiData.forEach(data => {
+                    tableBody.append(`
+                        <tr>
+                            <td>${data.name}</td>
+                            <td>${data.date}</td>
+                            <td>${data.weight}</td>
+                            <td>${data.height}</td>
+                            <td>${data.bmi}</td>
+                            <td>${data.status}</td>
+                        </tr>
+                    `);
+                });
+                $('#data-table').show();
+            }
+
+            $('#save-name').click(function () {
+                const name = $('#full-name').val().trim();
+                if (name) {
+                    saveName(name);
+                } else {
+                    alert('Please enter your full name');
+                }
+            });
+
+            $('#calculate-bmi').click(function () {
+                const name = getName();
+                const weight = parseFloat($('#weight').val());
+                const height = parseFloat($('#height').val());
+
+                if (!name || isNaN(weight) || isNaN(height) || weight <= 0 || height <= 0) {
+                    alert('Please enter valid weight and height');
+                    return;
+                }
+
+                const bmi = calculateBMI(weight, height);
+                status = getStatus(bmi);
+                $('#bmi-result').text(`BMI: ${bmi} - ${status}`);
+                saveBMIData(name, weight, height, bmi, status);
+            });
+
+            $('#logout').click(function () {
+                localStorage.removeItem('fullName');
+                displayGreeting();
+            });
+
+            $('#show-data').click(displayData);
+
+            displayGreeting();
+        });
+    </script>
+</body>
+
+</html>
